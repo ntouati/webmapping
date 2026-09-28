@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
 import { MaplibreTerradrawControl } from "@watergis/maplibre-gl-terradraw";
 import * as d3 from "d3";
 
@@ -332,120 +332,177 @@ function App() {
     });
   }
 
-  useEffect(() => {
-    if (!station || !chartRef.current) return;
+useEffect(() => {
+  if (!station || !chartRef.current) return;
 
-    const stationDataset = DATASETS.find(
-      (d) => d.id === "stations-meteo-en-place"
-    );
+  const stationDataset = DATASETS.find(
+    (d) => d.id === "stations-meteo-en-place"
+  );
 
-    if (!stationDataset) return;
+  if (!stationDataset) return;
 
-    fetch(stationDataset.url)
-      .then((response) => response.json())
-      .then((geojson) => {
-        const data = d3.rollups(
-          geojson.features,
-          (values) => values.length,
-          (d) => d.properties?.lcz ?? "NC",
-          (d) => d.properties?.type_stati ?? "NC"
-        );
+  fetch(stationDataset.url)
+    .then((response) => response.json())
+    .then((geojson) => {
+      const rows = geojson.features.map((feature) => {
+        const props = feature.properties || {};
 
-        const rows = [];
+        return {
+          lcz: props.lcz ?? "NC",
+          type: props.type_stati ?? "NC",
+        };
+      });
 
-        data.forEach(([lcz, types]) => {
-          types.forEach(([type, count]) => {
-            rows.push({
-              lcz,
-              type,
-              count,
-            });
+      // Comptage : LCZ × type de station
+      const grouped = d3.rollup(
+        rows,
+        (values) => values.length,
+        (d) => d.lcz,
+        (d) => d.type
+      );
+
+      const data = [];
+
+      grouped.forEach((typeMap, lcz) => {
+        typeMap.forEach((count, type) => {
+          data.push({
+            lcz,
+            type,
+            count,
           });
         });
-
-        const container = d3.select(chartRef.current);
-
-        container.selectAll("*").remove();
-
-        const width = 360;
-        const height = 250;
-
-        const margin = {
-          top: 20,
-          right: 20,
-          bottom: 70,
-          left: 45,
-        };
-
-        const svg = container
-          .append("svg")
-          .attr("viewBox", `0 0 ${width} ${height}`)
-          .attr("width", "100%");
-
-        const x = d3
-          .scaleBand()
-          .domain(
-            rows.map(
-              (d) => `${d.lcz}-${d.type}`
-            )
-          )
-          .range([
-            margin.left,
-            width - margin.right,
-          ])
-          .padding(0.2);
-
-        const y = d3
-          .scaleLinear()
-          .domain([
-            0,
-            d3.max(rows, (d) => d.count) || 1,
-          ])
-          .nice()
-          .range([
-            height - margin.bottom,
-            margin.top,
-          ]);
-
-        svg
-          .append("g")
-          .attr(
-            "transform",
-            `translate(0,${
-              height - margin.bottom
-            })`
-          )
-          .call(
-            d3.axisBottom(x).tickFormat((d) => d)
-          )
-          .selectAll("text")
-          .attr("transform", "rotate(-45)")
-          .style("text-anchor", "end");
-
-        svg
-          .append("g")
-          .attr(
-            "transform",
-            `translate(${margin.left},0)`
-          )
-          .call(d3.axisLeft(y));
-
-        svg
-          .selectAll(".bar")
-          .data(rows)
-          .join("rect")
-          .attr("x", (d) =>
-            x(`${d.lcz}-${d.type}`)
-          )
-          .attr("y", (d) => y(d.count))
-          .attr("width", x.bandwidth())
-          .attr(
-            "height",
-            (d) => y(0) - y(d.count)
-          )
-          .attr("fill", "#0d9488");
       });
-  }, [station]);
+
+      const container = d3.select(chartRef.current);
+      container.selectAll("*").remove();
+
+      if (data.length === 0) return;
+
+      const lczs = [...new Set(data.map((d) => d.lcz))];
+      const types = [...new Set(data.map((d) => d.type))];
+
+      const width = 360;
+      const height = 280;
+
+      const margin = {
+        top: 30,
+        right: 20,
+        bottom: 80,
+        left: 45,
+      };
+
+      const svg = container
+        .append("svg")
+        .attr("viewBox", `0 0 ${width} ${height}`)
+        .attr("width", "100%")
+        .attr("height", height);
+
+      // AXE X = LCZ
+      const x = d3
+        .scaleBand()
+        .domain(lczs)
+        .range([margin.left, width - margin.right])
+        .padding(0.2);
+
+      // AXE Y = nombre de stations
+      const y = d3
+        .scaleLinear()
+        .domain([0, d3.max(data, (d) => d.count) || 1])
+        .nice()
+        .range([height - margin.bottom, margin.top]);
+
+      // COULEUR = type de station
+      const color = d3
+        .scaleOrdinal()
+        .domain(types)
+        .range(PALETTES[palette]);
+
+      // Axe X
+      svg
+        .append("g")
+        .attr(
+          "transform",
+          `translate(0,${height - margin.bottom})`
+        )
+        .call(d3.axisBottom(x));
+
+      // Axe Y
+      svg
+        .append("g")
+        .attr(
+          "transform",
+          `translate(${margin.left},0)`
+        )
+        .call(d3.axisLeft(y).ticks(5));
+
+      // Barres groupées
+      const groupWidth = x.bandwidth() / types.length;
+
+      svg
+        .selectAll(".bar")
+        .data(
+          lczs.flatMap((lcz) =>
+            types.map((type) => {
+              const found = data.find(
+                (d) =>
+                  d.lcz === lcz &&
+                  d.type === type
+              );
+
+              return {
+                lcz,
+                type,
+                count: found ? found.count : 0,
+              };
+            })
+          )
+        )
+        .join("rect")
+        .attr(
+          "x",
+          (d) =>
+            x(d.lcz) +
+            types.indexOf(d.type) * groupWidth
+        )
+        .attr("y", (d) => y(d.count))
+        .attr("width", groupWidth - 2)
+        .attr(
+          "height",
+          (d) => y(0) - y(d.count)
+        )
+        .attr("fill", (d) => color(d.type));
+
+      // Légende
+      const legend = svg
+        .append("g")
+        .attr(
+          "transform",
+          `translate(${margin.left},${height - 35})`
+        );
+
+      types.forEach((type, i) => {
+        const xPosition = i * 75;
+
+        legend
+          .append("rect")
+          .attr("x", xPosition)
+          .attr("y", 0)
+          .attr("width", 10)
+          .attr("height", 10)
+          .attr("fill", color(type));
+
+        legend
+          .append("text")
+          .attr("x", xPosition + 13)
+          .attr("y", 10)
+          .style("font-size", "10px")
+          .text(type);
+      });
+    })
+    .catch((error) => {
+      console.error("Erreur graphique :", error);
+    });
+}, [station, palette]);
 
   return (
     <>
