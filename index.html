@@ -1,42 +1,15 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Carte participative Démo</title>
+  </head>
 
-  <title>Démo carte collaborative</title>
-</head>
+  <body>
+    <div id="root"></div>
 
-<body>
-  <div id="map"></div>
-
-  <aside id="panel" aria-label="Couches">
-    <h1>Carte de démonstration</h1>
-    <p class="sub">
-      Deux jeux de données GeoJSON pour rechercher des fonctionnalités.
-    </p>
-
-    <div id="layers"></div>
-
-    <div class="actions">
-      <button id="export" type="button">
-        Exporter mes dessins
-      </button>
-    </div>
-  </aside>
-
-  <aside id="dashboard">
-  <h2>Stations météo</h2>
-
-  <div id="dashboard-content">
-    Cliquez sur une station pour afficher ses informations.
-  </div>
-
-  <div id="station-chart"></div>
-  </aside>
-
-  <script type="module" src="/src/main.jsx"></script>
-</body>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
-
 
