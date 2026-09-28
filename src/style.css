@@ -46,7 +46,7 @@ body {
 
 #dashboard {
   position: absolute;
-  right: 10px;
+  right: 40px;
   bottom: 10px;
   z-index: 10;
 
@@ -84,3 +84,4 @@ body {
 .temperature-bar:hover {
   opacity: 0.7;
 }
+
