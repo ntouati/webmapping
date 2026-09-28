@@ -288,6 +288,13 @@ function App() {
       }
 
       const geojson = await response.json();
+    
+      console.log("GeoJSON chargé :", dataset.id);
+      console.log("Nombre de features :", geojson.features?.length);
+      console.log(
+        "Géométrie :",
+        geojson.features?.[0]?.geometry?.type
+      );
 
       const sourceId = `${dataset.id}-source`;
 
@@ -363,15 +370,19 @@ function App() {
           type: "circle",
           source: sourceId,
           paint: {
-            "circle-color": dataset.color,
-            "circle-opacity": 0.8,
-            "circle-radius": 6,
-            "circle-stroke-color": "#ffffff",
-            "circle-stroke-width": 1,
+           "circle-color": "#ff0000",
+           "circle-opacity": 1,
+           "circle-radius": 8,
+           "circle-stroke-color": "#ffffff",
+           "circle-stroke-width": 1,
           },
         });
 
         layerIds = [pointId];
+        console.log(
+          "Couche de points créée :",
+          pointId
+        );
 
         map.on("click", pointId, (e) => {
           const feature = e.features?.[0];
