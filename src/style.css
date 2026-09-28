@@ -1,0 +1,86 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#panel {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  width: 280px;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 20%);
+}
+
+.station-popup {
+  min-width: 220px;
+  max-width: 320px;
+}
+
+.station-popup h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.station-popup p {
+  margin: 4px 0;
+  font-size: 13px;
+}
+
+.station-popup strong {
+  font-weight: 600;
+}
+
+#dashboard {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 10;
+
+  width: 400px;
+  max-height: 500px;
+  overflow-y: auto;
+
+  padding: 15px;
+
+  background: white;
+  border-radius: 8px;
+
+  box-shadow: 0 2px 10px rgb(0 0 0 / 20%);
+}
+
+#dashboard h2 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+#temperature-chart {
+  width: 100%;
+  margin-top: 15px;
+}
+
+#temperature-chart svg {
+  width: 100%;
+  height: auto;
+}
+
+.temperature-bar {
+  cursor: pointer;
+}
+
+.temperature-bar:hover {
+  opacity: 0.7;
+}
